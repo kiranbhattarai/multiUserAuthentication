@@ -6,6 +6,7 @@ use App\Http\Controllers\Auth\Session;
 use App\Http\Controllers\Controller;
 use Auth;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class AdminLoginController extends Controller
 {
@@ -20,9 +21,9 @@ class AdminLoginController extends Controller
     public function login(Request $request)
     {
         //Validate the form data
-        $this->validate($request, [
-            'email' => 'required|email|unique:admins',
-            'password' => 'required|min:6',
+        $request->validate([
+            'email' => 'required|string',
+            'password' => 'required|string',
         ]);
         //Attempt to log the user in
         $credentials = array(
@@ -34,8 +35,15 @@ class AdminLoginController extends Controller
             return redirect()->intended(route('admin.dashboard'));
         }
         //if unsuccessfull, then redirect back to the login with the form data
-        return redirect()->back()->withInput($request->only('email', 'remember'));
+        return $this->sendFailedLoginResponse($request);
 
+    }
+
+    protected function sendFailedLoginResponse(Request $request)
+    {
+        throw ValidationException::withMessages([
+            'email' => [trans('auth.failed')],
+        ]);
     }
 
     public function logout()
